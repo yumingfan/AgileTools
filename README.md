@@ -37,3 +37,24 @@ npm run test:server
 ```bash
 npm run build
 ```
+
+### Makefile（可選）
+
+本專案提供根目錄 `Makefile` 方便快速執行常用指令（本質上是包裝 npm scripts）。
+
+```bash
+make help
+```
+
+常用目標：
+
+- `make dev`：前後端同時開發（等同 `npm run dev`）
+- `make dev-server` / `make dev-web`：只跑後端 / 只跑前端
+- `make test` / `make test-watch` / `make test-cov` / `make test-e2e`：後端測試
+- `make lint`：前後端 lint
+- `make build`：建置 server + web
+
+Windows 注意：
+
+- 需要可用的 `make`（例如 Git Bash / WSL / MSYS2 / GnuWin32）。
+- `make clean` 會呼叫 `rm -rf`，建議在 Git Bash / WSL 下使用。
