@@ -104,11 +104,15 @@ TBD - created by archiving change planning-poker-web. Update Purpose after archi
 - **THEN** 系統不得接受其當前 Round 的投票，並要求其在下一個 Round 投票
 
 ### Requirement: 亮牌後顯示每人投票明細
-系統 SHALL 在亮牌後顯示每個參與者投了哪張卡，且同時顯示彙總結果或失敗/無法估算提醒。
+系統 SHALL 在亮牌後顯示每個參與者投了哪張卡，且同時顯示彙總結果或失敗/無法估算提醒。系統 SHALL 允許前端以品牌識別視覺（例如品牌 Logo 與品牌色）呈現，但 SHALL NOT 改變投票流程、事件語意與結果計算邏輯。
 
 #### Scenario: 亮牌後顯示每人卡片與結果
 - **WHEN** 該 Round 進入亮牌完成狀態
 - **THEN** 系統顯示每位參與者的投票卡片，並顯示該 Round 的平均結果或「無法估算」或最高/最低提醒
+
+#### Scenario: 品牌視覺套用不影響流程
+- **WHEN** 前端套用品牌 Logo 與品牌色主題
+- **THEN** 使用者可在相同流程中完成建立房間、加入、投票、亮牌與下一輪操作，且行為與結果與套用前一致
 
 ### Requirement: 得分與待估項目完結
 系統 SHALL 將 **「成功平均」**（三連續 Fibonacci 成功判定後之數字平均）視為該待估項目之**唯一**得分。`?`、失敗提醒、Round 3 收斂後之「無法估算」等均 **SHALL NOT** 視為得分。

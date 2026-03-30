@@ -16,12 +16,12 @@ function tryPrint() {
   if (!m) return;
   printed.done = true;
   let backendOrigin = process.env.NEXT_PUBLIC_WS_ORIGIN;
-  if (!backendOrigin) backendOrigin = 'http://localhost:9004';
-  let backendPort = 9004;
+  if (!backendOrigin) backendOrigin = 'http://localhost:3004';
+  let backendPort = 3004;
   try {
-    backendPort = Number(new URL(backendOrigin).port || 9004);
+    backendPort = Number(new URL(backendOrigin).port || 3004);
   } catch {
-    backendPort = 9004;
+    backendPort = 3004;
   }
   console.log('');
   console.log('══════════════════════════════════════════════════');
@@ -40,7 +40,7 @@ function feed(chunk) {
   tryPrint();
 }
 
-const child = spawn('npx', ['next', 'dev', '-p', '9003'], {
+const child = spawn('npx', ['next', 'dev', '-p', '3003'], {
   cwd: root,
   shell: true,
   env: process.env,

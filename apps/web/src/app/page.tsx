@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { io, type Socket } from "socket.io-client";
+import Image from "next/image";
 
 const CARDS = ["0", "1", "2", "3", "5", "8", "13", "21", "?"] as const;
 
@@ -75,10 +76,10 @@ function persistRoomSession(roomCode: string, displayName: string): void {
 
 function getWsOrigin(): string {
   const fromEnv = process.env.NEXT_PUBLIC_WS_ORIGIN;
-  if (typeof window === "undefined") return "http://localhost:9004";
+  if (typeof window === "undefined") return "http://localhost:3004";
   const proto = window.location.protocol === "https:" ? "https:" : "http:";
   const host = window.location.hostname;
-  const derived = `${proto}//${host}:9004`;
+  const derived = `${proto}//${host}:3004`;
 
   if (fromEnv && fromEnv.trim()) {
     const trimmed = fromEnv.trim();
@@ -285,22 +286,30 @@ export default function Home() {
 
   if (!clientId) {
     return (
-      <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center bg-slate-950 px-4 py-6 text-slate-100">
-        <p className="text-center text-sm text-slate-400">初始化中…</p>
+      <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center bg-[#0b1220] px-4 py-6 text-slate-100">
+        <p className="text-center text-sm text-slate-300">初始化中…</p>
       </main>
     );
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-md flex-col gap-4 bg-slate-950 px-4 py-6 text-slate-100">
-      <header>
-        <h1 className="text-xl font-semibold tracking-tight">Planning Poker</h1>
-        <p className="text-sm text-slate-400">行動端即時估算（WebSocket）</p>
+    <main className="mx-auto flex min-h-screen max-w-md flex-col gap-4 bg-[#0b1220] px-4 py-6 text-slate-100">
+      <header className="space-y-2">
+        <Image
+          src="/weagile-logo.png"
+          alt="WeAgile Logo"
+          width={260}
+          height={84}
+          className="h-14 w-auto object-contain"
+          priority
+        />
+        <h1 className="text-xl font-semibold tracking-tight text-[#4A90E2]">Planning Poker</h1>
+        <p className="text-sm text-slate-300">相對估算工具</p>
       </header>
 
       {error && (
         <div
-          className="rounded-lg border border-rose-500/40 bg-rose-950/40 px-3 py-2 text-sm text-rose-100"
+          className="rounded-lg border border-[#F27A3E]/60 bg-[#3a1f16] px-3 py-2 text-sm text-[#ffd8c4]"
           role="alert"
         >
           {error}
@@ -308,23 +317,23 @@ export default function Home() {
       )}
 
       {!state && (
-        <section className="space-y-4 rounded-xl border border-slate-800 bg-slate-900/60 p-4">
-          <h2 className="text-sm font-medium text-slate-300">建立房間</h2>
-          <label className="block text-xs text-slate-400">
+        <section className="space-y-4 rounded-xl border border-[#1b2a41] bg-[#101a2b]/90 p-4">
+          <h2 className="text-sm font-medium text-[#8CCF3F]">建立房間</h2>
+          <label className="block text-xs text-slate-300">
             Host 名稱
             <input
-              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm"
+              className="mt-1 w-full rounded-md border border-[#223555] bg-[#0c1422] px-3 py-2 text-sm"
               value={hostName}
               onChange={(e) => setHostName(e.target.value)}
               placeholder="你的名字"
             />
           </label>
-          <label className="block text-xs text-slate-400">
+          <label className="block text-xs text-slate-300">
             思考時間（秒，至少 5）
             <input
               type="number"
               min={5}
-              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm"
+              className="mt-1 w-full rounded-md border border-[#223555] bg-[#0c1422] px-3 py-2 text-sm"
               value={thinkSeconds}
               onChange={(e) => setThinkSeconds(Number(e.target.value))}
             />
@@ -333,18 +342,18 @@ export default function Home() {
             type="button"
             onClick={createRoom}
             disabled={!socket?.connected}
-            className="w-full rounded-lg bg-indigo-600 py-2.5 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-50"
+            className="w-full rounded-lg bg-[#4A90E2] py-2.5 text-sm font-medium text-white hover:bg-[#3e7ccc] disabled:opacity-50"
           >
             建立房間
           </button>
 
-          <hr className="border-slate-800" />
+          <hr className="border-[#1b2a41]" />
 
-          <h2 className="text-sm font-medium text-slate-300">加入房間</h2>
-          <label className="block text-xs text-slate-400">
+          <h2 className="text-sm font-medium text-[#8CCF3F]">加入房間</h2>
+          <label className="block text-xs text-slate-300">
             房間代碼
             <input
-              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm uppercase"
+              className="mt-1 w-full rounded-md border border-[#223555] bg-[#0c1422] px-3 py-2 text-sm uppercase"
               value={joinCode}
               onChange={(e) => setJoinCode(e.target.value)}
               placeholder="例如 ABC123"
@@ -353,10 +362,10 @@ export default function Home() {
               spellCheck={false}
             />
           </label>
-          <label className="block text-xs text-slate-400">
+          <label className="block text-xs text-slate-300">
             顯示名稱
             <input
-              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm"
+              className="mt-1 w-full rounded-md border border-[#223555] bg-[#0c1422] px-3 py-2 text-sm"
               value={joinName}
               onChange={(e) => setJoinName(e.target.value)}
               placeholder="你的名字"
@@ -366,7 +375,7 @@ export default function Home() {
             type="button"
             onClick={joinRoom}
             disabled={!socket?.connected}
-            className="w-full rounded-lg border border-slate-600 py-2.5 text-sm font-medium text-slate-100 hover:bg-slate-800 disabled:opacity-50"
+            className="w-full rounded-lg border border-[#4A90E2] py-2.5 text-sm font-medium text-[#d7e9ff] hover:bg-[#13243d] disabled:opacity-50"
           >
             加入
           </button>
@@ -374,16 +383,16 @@ export default function Home() {
       )}
 
       {state && (
-        <section className="space-y-4 rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+        <section className="space-y-4 rounded-xl border border-[#1b2a41] bg-[#101a2b]/90 p-4">
           <div className="flex items-center justify-between gap-2">
-            <span className="text-sm text-slate-400">房間</span>
-            <code className="rounded bg-slate-950 px-2 py-1 text-sm font-mono tracking-wider">
+            <span className="text-sm text-slate-300">房間</span>
+            <code className="rounded bg-[#0c1422] px-2 py-1 text-sm font-mono tracking-wider">
               {state.roomCode}
             </code>
           </div>
           <div className="flex flex-wrap gap-2 text-sm">
-            <span className="rounded-full bg-slate-800 px-3 py-1">Round {state.round}</span>
-            <span className="rounded-full bg-slate-800 px-3 py-1 capitalize">
+            <span className="rounded-full bg-[#13243d] px-3 py-1">Round {state.round}</span>
+            <span className="rounded-full bg-[#13243d] px-3 py-1 capitalize">
               {state.phase.replaceAll("_", " ")}
             </span>
           </div>
@@ -392,7 +401,7 @@ export default function Home() {
             <button
               type="button"
               onClick={dissolveRoom}
-              className="w-full rounded-lg border border-rose-700/60 bg-rose-950/30 py-2 text-sm text-rose-100 hover:bg-rose-950/50"
+              className="w-full rounded-lg border border-[#F27A3E]/70 bg-[#3a1f16] py-2 text-sm text-[#ffd8c4] hover:bg-[#4a261b]"
             >
               解散房間
             </button>
@@ -401,7 +410,7 @@ export default function Home() {
             <button
               type="button"
               onClick={leaveRoom}
-              className="w-full rounded-lg border border-slate-600 py-2 text-sm text-slate-200 hover:bg-slate-800"
+              className="w-full rounded-lg border border-[#4A90E2] py-2 text-sm text-[#d7e9ff] hover:bg-[#13243d]"
             >
               離開房間
             </button>
@@ -411,7 +420,7 @@ export default function Home() {
             <button
               type="button"
               onClick={startVoting}
-              className="w-full rounded-lg bg-emerald-600 py-2.5 text-sm font-medium text-white hover:bg-emerald-500"
+              className="w-full rounded-lg bg-[#8CCF3F] py-2.5 text-sm font-medium text-[#13200a] hover:bg-[#7ab535]"
             >
               開始 Round 1 投票
             </button>
@@ -420,20 +429,20 @@ export default function Home() {
           {state.phase === "voting" && (
             <div className="space-y-3">
               {state.showThinkCountdown && state.thinkRemainingSeconds !== null && (
-                <p className="text-center text-3xl font-bold text-amber-300">
+                <p className="text-center text-3xl font-bold text-[#F27A3E]">
                   {state.thinkRemainingSeconds}
                 </p>
               )}
               {!state.showThinkCountdown &&
                 state.thinkRemainingSeconds !== null &&
                 state.thinkRemainingSeconds > 5 && (
-                  <p className="text-center text-sm text-slate-400">
+                  <p className="text-center text-sm text-slate-300">
                     思考剩餘 {state.thinkRemainingSeconds} 秒
                   </p>
                 )}
               {me?.canVoteThisRound && (
                 <div>
-                  <p className="mb-2 text-xs text-slate-400">選擇卡片</p>
+                  <p className="mb-2 text-xs text-slate-300">選擇卡片</p>
                   <div className="grid grid-cols-3 gap-2">
                     {CARDS.map((c) => (
                       <button
@@ -442,8 +451,8 @@ export default function Home() {
                         onClick={() => vote(c)}
                         className={`rounded-lg border py-3 text-lg font-semibold ${
                           state.myVote === c
-                            ? "border-indigo-400 bg-indigo-950 text-indigo-100"
-                            : "border-slate-700 bg-slate-950 hover:border-slate-500"
+                            ? "border-[#4A90E2] bg-[#163055] text-[#d7e9ff]"
+                            : "border-[#223555] bg-[#0c1422] hover:border-[#4A90E2]"
                         }`}
                       >
                         {c}
@@ -451,14 +460,14 @@ export default function Home() {
                     ))}
                   </div>
                   {state.myVote && (
-                    <p className="mt-2 text-center text-xs text-slate-500">
+                    <p className="mt-2 text-center text-xs text-slate-400">
                       已選：{state.myVote}（他人看不到你的選擇）
                     </p>
                   )}
                 </div>
               )}
               {!me?.canVoteThisRound && (
-                <p className="text-sm text-amber-200/90">
+                <p className="text-sm text-[#ffd8c4]">
                   本輪你無法投票（晚加入或本輪已鎖定），請等待下一輪。
                 </p>
               )}
@@ -466,7 +475,7 @@ export default function Home() {
           )}
 
           {state.phase === "reveal_countdown" && state.revealTick && (
-            <p className="text-center text-4xl font-bold text-sky-300">
+            <p className="text-center text-4xl font-bold text-[#4A90E2]">
               亮牌 {state.revealTick}
             </p>
           )}
@@ -474,20 +483,20 @@ export default function Home() {
           {state.phase === "revealed" && (
             <div className="space-y-3">
               {state.revealedVotes && (
-                <ul className="space-y-1 rounded-lg border border-slate-800 bg-slate-950/80 p-3 text-sm">
+                <ul className="space-y-1 rounded-lg border border-[#223555] bg-[#0c1422] p-3 text-sm">
                   {Object.entries(state.revealedVotes).map(([n, v]) => (
                     <li key={n} className="flex justify-between">
-                      <span className="text-slate-400">{n}</span>
+                      <span className="text-slate-300">{n}</span>
                       <span className="font-mono font-medium">{v}</span>
                     </li>
                   ))}
                 </ul>
               )}
               {state.summary && (
-                <div className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm">
+                <div className="rounded-lg border border-[#223555] bg-[#0f1929] px-3 py-2 text-sm">
                   <p className="font-medium">{state.summary.message}</p>
                   {state.summary.outcome === "failure_high_low" && (
-                    <p className="mt-1 text-xs text-slate-400">
+                    <p className="mt-1 text-xs text-slate-300">
                       最低 {state.summary.min}／最高 {state.summary.max}
                     </p>
                   )}
@@ -497,35 +506,35 @@ export default function Home() {
                 <button
                   type="button"
                   onClick={nextRound}
-                  className="w-full rounded-lg bg-indigo-600 py-2.5 text-sm font-medium text-white hover:bg-indigo-500"
+                  className="w-full rounded-lg bg-[#4A90E2] py-2.5 text-sm font-medium text-white hover:bg-[#3e7ccc]"
                 >
                   開始下一輪（Round {state.round + 1}）
                 </button>
               )}
               {state.round >= 3 && (
-                <p className="text-center text-xs text-slate-500">已完成三輪流程</p>
+                <p className="text-center text-xs text-slate-400">已完成三輪流程</p>
               )}
             </div>
           )}
 
           {state.phase === "item_complete" && (
             <div className="space-y-3">
-              <p className="text-center text-xs text-amber-200/90">本項已結束</p>
+              <p className="text-center text-xs text-[#ffd8c4]">本項已結束</p>
               {state.revealedVotes && (
-                <ul className="space-y-1 rounded-lg border border-slate-800 bg-slate-950/80 p-3 text-sm">
+                <ul className="space-y-1 rounded-lg border border-[#223555] bg-[#0c1422] p-3 text-sm">
                   {Object.entries(state.revealedVotes).map(([n, v]) => (
                     <li key={n} className="flex justify-between">
-                      <span className="text-slate-400">{n}</span>
+                      <span className="text-slate-300">{n}</span>
                       <span className="font-mono font-medium">{v}</span>
                     </li>
                   ))}
                 </ul>
               )}
               {state.summary && (
-                <div className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm">
+                <div className="rounded-lg border border-[#223555] bg-[#0f1929] px-3 py-2 text-sm">
                   <p className="font-medium">{state.summary.message}</p>
                   {state.summary.outcome === "failure_high_low" && (
-                    <p className="mt-1 text-xs text-slate-400">
+                    <p className="mt-1 text-xs text-slate-300">
                       最低 {state.summary.min}／最高 {state.summary.max}
                     </p>
                   )}
@@ -535,7 +544,7 @@ export default function Home() {
                 <button
                   type="button"
                   onClick={nextItem}
-                  className="w-full rounded-lg bg-indigo-600 py-2.5 text-sm font-medium text-white hover:bg-indigo-500"
+                  className="w-full rounded-lg bg-[#4A90E2] py-2.5 text-sm font-medium text-white hover:bg-[#3e7ccc]"
                 >
                   開始下一次投分
                 </button>
@@ -544,18 +553,18 @@ export default function Home() {
           )}
 
           <div>
-            <p className="mb-2 text-xs text-slate-500">成員</p>
+            <p className="mb-2 text-xs text-slate-400">成員</p>
             <ul className="space-y-1 text-sm text-slate-300">
               {state.participants.map((p) => (
                 <li key={p.clientId} className="flex justify-between gap-2">
                   <span>
                     {p.name}
                     {p.role === "host" ? "（Host）" : ""}
-                    <span className="ml-1 text-xs text-slate-500">
+                    <span className="ml-1 text-xs text-slate-400">
                       {p.connected ? "線上" : "離線"}
                     </span>
                   </span>
-                  <span className="text-slate-500">
+                  <span className="text-slate-400">
                     {p.hasVoted ? "已投" : "未投"}
                   </span>
                 </li>
