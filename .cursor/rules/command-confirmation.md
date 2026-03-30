@@ -181,11 +181,10 @@ feat: 新增了新功能（description 勿用大寫開頭、勿用過去式）
 - 若 `README.md` 尚未有 Release 區塊，先幫使用者在 README 底部加上一個簡單的「Release Notes」章節，然後再加入這次版本的說明。
 - 在建立/推送 tag 及建立 GitHub Release 前，先確認（或補齊）上述 `README.md` 的 Release Notes
 - 在幫忙產生 release 描述或 changelog 時，**優先復用或同步到 `README.md` 的 Release Notes**，避免兩邊內容不一致。
-- 使用者只要明確說「發版」（即使沒特別拆開講），預設視為要同時完成 **Git 發版 + GitHub Release + Docker 發版**，不可只做其中一邊。
+- 使用者只要明確說「發版」（即使沒特別拆開講），預設視為要同時完成 **Git 發版 + GitHub Release**，不可只做其中一邊。
 - 預設執行順序：
   1. 整理版本內容（必要時更新 `README.md` 版本紀錄／`package.json` 版本號）。
   2. Git 發版：`git pull` → `commit` → 建立並推送 **annotated tag**（例如 `v1.2.0`，與 `package.json` 一致）→ `push` / `push --tags`。
   3. **GitHub Release**：在標籤已於遠端存在後，使用 **`gh release create <tag>`** 建立 Release（標題可用版本號；內文優先自 `README.md` 該版條目整理，與 README 一致）。若本機無 `gh` 或未登入，須向使用者說明並改請其於網頁建立，或協助安裝／登入後再執行；**不可略過此步**（除非使用者當下明確表示不要 GitHub Release）。
-  4. Docker 發版：建置並推送對應標籤（至少 `latest` 與當前版本標籤；若專案已採 multi-arch，需維持相同策略）。
-- 若任一步驟缺少必要資訊（例如 Docker Hub 倉庫、版本號、tag 命名規則），先向使用者確認；若資訊齊全則直接完整執行到 **git、GitHub Release、docker** 都發布完成。
+- 若任一步驟缺少必要資訊（版本號、tag 命名規則），先向使用者確認；若資訊齊全則直接完整執行到 **git、GitHub Release** 都發布完成。
 
