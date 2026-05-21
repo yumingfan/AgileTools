@@ -64,6 +64,17 @@ Windows 注意：
 
 ## Release Notes
 
+### 1.0.6
+
+- **Planning Poker 估算公式**：Round 1/2 成功平均與 Round 3 收斂時，亮牌、項目完結與估算歷史皆顯示 `calculationFormula`（Fibonacci 區間或移除 min/max 後之算式）。
+- **平均精度**：成功與收斂之平均 **四捨五入至個位數**（整數），與公式結尾一致。
+- **OpenSpec**：封存 `planning-poker-calculation-formula` 並同步 `openspec/specs/planning-poker/spec.md`。
+
+### 1.0.5
+
+- **Planning Poker 估算歷史**：待估項目完結後於房內面板回看本機歷史（localStorage），含摘要與投票明細。
+- **修正**：Host 與參與者皆能穩定看到歷史更新。
+
 ### 1.0.4
 
 - **Docker Compose（本機 / 正式）**：`apps/server` / `apps/web` 容器不再在 Dockerfile 內硬編 `PORT`，而是完全由環境變數與 `docker compose` 的 `environment` / `ports` 控制；`docker-compose.yml` 用 9003/9004，`docker-compose.local.yml` 用 3003/3004（主機埠可自由調整）。

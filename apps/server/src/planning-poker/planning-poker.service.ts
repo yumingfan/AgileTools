@@ -1,6 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { randomBytes } from 'crypto';
-import { evaluateRound12, evaluateRound3, isAllowedCard, type CardString } from './poker-rules';
+import {
+  buildRound3ConvergedFormula,
+  buildSuccessAverageFormula,
+  evaluateRound12,
+  evaluateRound3,
+  formatAverageInt,
+  isAllowedCard,
+  parseVote,
+  roundAverageInt,
+  type CardString,
+} from './poker-rules';
 import type { Participant, RoomPhase, RoomSnapshot, RoomSummaryPayload } from './room.types';
 
 interface InternalRoom {
@@ -414,10 +424,13 @@ export class PlanningPokerService {
       if (r3.kind === 'cannot_estimate') {
         return { outcome: 'round3_cannot_estimate', message: '無法估算' };
       }
+      const built = buildRound3ConvergedFormula(votes);
+      const avg = built?.average ?? roundAverageInt(r3.average);
       return {
         outcome: 'round3_converged',
-        message: `Round 3 收斂後平均：${r3.average}`,
-        average: r3.average,
+        message: `Round 3 收斂後平均：${formatAverageInt(avg)}`,
+        average: avg,
+        calculationFormula: built?.formula,
         round3Remaining: r3.remaining,
       };
     }
@@ -427,10 +440,15 @@ export class PlanningPokerService {
       return { outcome: 'cannot_estimate', message: '無法估算（含 ?）' };
     }
     if (r12.kind === 'success') {
+      const nums = votes
+        .map(parseVote)
+        .filter((v): v is number => v !== '?' && v !== null);
+      const built = buildSuccessAverageFormula(nums);
       return {
         outcome: 'success_avg',
-        message: `成功，平均：${r12.average}`,
-        average: r12.average,
+        message: `成功，平均：${formatAverageInt(built.average)}`,
+        average: built.average,
+        calculationFormula: built.formula,
       };
     }
     return {

@@ -52,6 +52,62 @@ export function average(nums: number[]): number {
   return nums.reduce((a, b) => a + b, 0) / nums.length;
 }
 
+/** 平均顯示與儲存：四捨五入至個位數（整數） */
+export function roundAverageInt(n: number): number {
+  return Math.round(n);
+}
+
+export function formatAverageInt(n: number): string {
+  if (!Number.isFinite(n)) return '—';
+  return String(roundAverageInt(n));
+}
+
+export function findMatchingTriplet(nums: number[]): readonly number[] | undefined {
+  if (nums.length === 0) return undefined;
+  return TRIPLETS.find((t) => {
+    const set = new Set(t);
+    return nums.every((n) => set.has(n));
+  });
+}
+
+/** Round 1/2 成功：產生平均（整數）與可讀公式 */
+export function buildSuccessAverageFormula(nums: number[]): {
+  average: number;
+  formula: string;
+  matchedTriplet: readonly number[];
+} {
+  const triplet = findMatchingTriplet(nums);
+  if (!triplet) {
+    throw new Error('votes not in same triplet');
+  }
+  const avg = roundAverageInt(average(nums));
+  const sumExpr = nums.join(' + ');
+  const formula =
+    `判定：全部落在 Fibonacci 區間 {${triplet.join(', ')}}\n` +
+    `平均 = (${sumExpr}) ÷ ${nums.length} = ${formatAverageInt(avg)}`;
+  return { average: avg, formula, matchedTriplet: triplet };
+}
+
+/** Round 3 收斂：產生平均（整數）與可讀公式 */
+export function buildRound3ConvergedFormula(
+  votes: string[],
+): { average: number; formula: string; remaining: number[] } | null {
+  const outcome = evaluateRound3(votes);
+  if (outcome.kind !== 'converged') return null;
+  const parsed = votes.map(parseVote);
+  const nums = parsed as number[];
+  const mn = Math.min(...nums);
+  const mx = Math.max(...nums);
+  const avg = roundAverageInt(outcome.average);
+  const remaining = outcome.remaining;
+  const sumExpr = remaining.join(' + ');
+  const formula =
+    `移除所有最低票（${mn}）與最高票（${mx}）\n` +
+    `剩餘：${remaining.join(', ')}\n` +
+    `平均 = (${sumExpr}) ÷ ${remaining.length} = ${formatAverageInt(avg)}`;
+  return { average: avg, formula, remaining };
+}
+
 /** Round 1/2：含 `?` → 無法估算；否則三連續成功則平均，否則失敗（最高／最低提醒） */
 export type Round12Outcome =
   | { kind: 'cannot_estimate' }

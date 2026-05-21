@@ -53,6 +53,8 @@ export interface RoomSummaryPayload {
     | 'round3_cannot_estimate';
   message: string;
   average?: number;
+  /** 成功平均或 Round 3 收斂時的計算公式（多行文字） */
+  calculationFormula?: string;
   min?: number;
   max?: number;
   round3Remaining?: number[];

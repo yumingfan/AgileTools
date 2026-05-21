@@ -1,9 +1,13 @@
 import {
   allNumericInSameTriplet,
+  buildRound3ConvergedFormula,
+  buildSuccessAverageFormula,
   evaluateRound12,
   evaluateRound3,
+  formatAverageInt,
   isAllowedCard,
   parseVote,
+  roundAverageInt,
 } from './poker-rules';
 
 describe('poker-rules', () => {
@@ -41,5 +45,27 @@ describe('poker-rules', () => {
     });
     expect(evaluateRound3(['5', '5', '5'])).toEqual({ kind: 'cannot_estimate' });
     expect(evaluateRound3(['5', '?'])).toEqual({ kind: 'cannot_estimate' });
+  });
+
+  it('roundAverageInt and formatAverageInt', () => {
+    expect(roundAverageInt(2 / 3)).toBe(1);
+    expect(formatAverageInt(2 / 3)).toBe('1');
+  });
+
+  it('buildSuccessAverageFormula', () => {
+    const built = buildSuccessAverageFormula([3, 3, 5]);
+    expect(built.average).toBe(4);
+    expect(built.formula).toContain('Fibonacci');
+    expect(built.formula).toContain('3 + 3 + 5');
+    expect(built.formula).toContain('= 4');
+  });
+
+  it('buildRound3ConvergedFormula', () => {
+    const built = buildRound3ConvergedFormula(['3', '5', '8', '8', '1']);
+    expect(built).not.toBeNull();
+    expect(built!.average).toBe(4);
+    expect(built!.formula).toContain('移除');
+    expect(built!.formula).toContain('3 + 5');
+    expect(built!.formula).toContain('= 4');
   });
 });

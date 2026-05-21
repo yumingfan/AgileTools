@@ -28,6 +28,7 @@ type RoomSnapshot = {
     min?: number;
     max?: number;
     round3Remaining?: number[];
+    calculationFormula?: string;
   } | null;
   participants: Array<{
     clientId: string;
@@ -113,6 +114,28 @@ function clearHistory(roomCode: string): void {
   } catch {
     /* ignore */
   }
+}
+
+function SummaryResultBlock({
+  summary,
+}: {
+  summary: NonNullable<RoomSnapshot["summary"]>;
+}) {
+  return (
+    <div className="rounded-lg border border-[#223555] bg-[#0c1422] px-3 py-2 text-sm text-slate-300">
+      <p className="font-medium text-slate-100">{summary.message}</p>
+      {summary.outcome === "failure_high_low" && (
+        <p className="mt-1 text-xs">
+          最低 {summary.min}／最高 {summary.max}
+        </p>
+      )}
+      {summary.calculationFormula && (
+        <pre className="mt-2 whitespace-pre-wrap font-mono text-xs text-slate-400">
+          {summary.calculationFormula}
+        </pre>
+      )}
+    </div>
+  );
 }
 
 function clearRoomSession(): void {
@@ -635,16 +658,7 @@ export default function Home() {
                   ))}
                 </ul>
               )}
-              {state.summary && (
-                <div className="rounded-lg border border-[#223555] bg-[#0f1929] px-3 py-2 text-sm">
-                  <p className="font-medium">{state.summary.message}</p>
-                  {state.summary.outcome === "failure_high_low" && (
-                    <p className="mt-1 text-xs text-slate-300">
-                      最低 {state.summary.min}／最高 {state.summary.max}
-                    </p>
-                  )}
-                </div>
-              )}
+              {state.summary && <SummaryResultBlock summary={state.summary} />}
               {isHost && state.round < 3 && (
                 <button
                   type="button"
@@ -673,16 +687,7 @@ export default function Home() {
                   ))}
                 </ul>
               )}
-              {state.summary && (
-                <div className="rounded-lg border border-[#223555] bg-[#0f1929] px-3 py-2 text-sm">
-                  <p className="font-medium">{state.summary.message}</p>
-                  {state.summary.outcome === "failure_high_low" && (
-                    <p className="mt-1 text-xs text-slate-300">
-                      最低 {state.summary.min}／最高 {state.summary.max}
-                    </p>
-                  )}
-                </div>
-              )}
+              {state.summary && <SummaryResultBlock summary={state.summary} />}
               {isHost && (
                 <button
                   type="button"
@@ -744,17 +749,7 @@ export default function Home() {
                               ))}
                             </ul>
 
-                            <div className="rounded-lg border border-[#223555] bg-[#0c1422] px-3 py-2 text-xs text-slate-300">
-                              <p className="font-medium text-slate-200">{h.summary.message}</p>
-                              {h.summary.outcome === "failure_high_low" && (
-                                <p className="mt-1">
-                                  最低 {h.summary.min}／最高 {h.summary.max}
-                                </p>
-                              )}
-                              {typeof h.summary.average === "number" && (
-                                <p className="mt-1">平均 {h.summary.average}</p>
-                              )}
-                            </div>
+                            <SummaryResultBlock summary={h.summary} />
                           </div>
                         </details>
                       </li>

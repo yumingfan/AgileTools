@@ -37,6 +37,9 @@ describe('planning-poker item-complete flow', () => {
     room = svc.getRoom(code) as any;
     expect(room.phase).toBe('item_complete');
     expect(room.summary?.outcome).toBe('success_avg');
+    expect(room.summary?.average).toBe(1);
+    expect(room.summary?.calculationFormula).toContain('Fibonacci');
+    expect(room.summary?.calculationFormula).toContain('= 1');
 
     const nextRoundRes = svc.hostNextRound(hostId, code);
     expect(nextRoundRes.ok).toBe(false);
@@ -148,6 +151,43 @@ describe('planning-poker item-complete flow', () => {
     room = svc.getRoom(code) as any;
     expect(room.phase).toBe('lobby');
     expect(room.summary).toBeNull();
+  });
+
+  it('Round 3 收斂時 summary 含 calculationFormula 與二位小數平均', async () => {
+    const hostId = 'host-r3';
+    const p1Id = 'p1-r3';
+    const p2Id = 'p2-r3';
+    const code = svc.createRoom(hostId, 'Host', hostId, 5);
+    svc.joinRoom(p1Id, code, 'P1', p1Id);
+    svc.joinRoom(p2Id, code, 'P2', p2Id);
+
+    svc.hostStartVoting(hostId, code);
+    svc.vote(hostId, code, '0');
+    svc.vote(p1Id, code, '3');
+    svc.vote(p2Id, code, '5');
+    await flushMicrotasks();
+    jest.advanceTimersByTime(3000);
+
+    svc.hostNextRound(hostId, code);
+    svc.vote(hostId, code, '0');
+    svc.vote(p1Id, code, '3');
+    svc.vote(p2Id, code, '5');
+    await flushMicrotasks();
+    jest.advanceTimersByTime(3000);
+
+    svc.hostNextRound(hostId, code);
+    svc.vote(hostId, code, '1');
+    svc.vote(p1Id, code, '3');
+    svc.vote(p2Id, code, '8');
+    await flushMicrotasks();
+    jest.advanceTimersByTime(3000);
+
+    const room = svc.getRoom(code) as any;
+    expect(room.phase).toBe('item_complete');
+    expect(room.summary?.outcome).toBe('round3_converged');
+    expect(room.summary?.average).toBe(3);
+    expect(room.summary?.calculationFormula).toContain('移除');
+    expect(room.summary?.calculationFormula).toContain('= 3');
   });
 });
 
