@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { io, type Socket } from "socket.io-client";
 import Image from "next/image";
 
@@ -9,6 +9,7 @@ const CARDS = ["0", "1", "2", "3", "5", "8", "13", "21", "?"] as const;
 const PP_CLIENT_ID = "pp:clientId";
 const PP_ROOM_CODE = "pp:roomCode";
 const PP_LAST_NAME = "pp:lastDisplayName";
+const PP_HISTORY_PREFIX = "pp:history:";
 
 type RoomSnapshot = {
   roomCode: string;
@@ -38,6 +39,17 @@ type RoomSnapshot = {
   }>;
 };
 
+type EstimationHistoryItem = {
+  id: string;
+  roomCode: string;
+  itemIndex: number;
+  completedAt: string;
+  roundsUsed: 1 | 2 | 3;
+  summary: NonNullable<RoomSnapshot["summary"]>;
+  revealedVotes: NonNullable<RoomSnapshot["revealedVotes"]>;
+  participants: Array<{ clientId: string; name: string; role: string }>;
+};
+
 function makeUuid(): string {
   const c: Crypto | undefined = typeof crypto !== "undefined" ? crypto : undefined;
   if (c?.randomUUID) return c.randomUUID();
@@ -54,6 +66,53 @@ function makeUuid(): string {
   }
   // 最低保底：無 crypto 時仍需穩定字串（非密碼學安全）
   return `fallback-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+}
+
+function historyKey(roomCode: string): string {
+  return `${PP_HISTORY_PREFIX}${roomCode.trim().toUpperCase()}`;
+}
+
+function stableVotesString(votes: Record<string, string>): string {
+  const keys = Object.keys(votes).sort((a, b) => a.localeCompare(b));
+  return `{${keys.map((k) => JSON.stringify(k) + ":" + JSON.stringify(votes[k])).join(",")}}`;
+}
+
+function makeHistoryId(roomCode: string, snapshot: RoomSnapshot): string {
+  const votes = snapshot.revealedVotes ? stableVotesString(snapshot.revealedVotes) : "{}";
+  const outcome = snapshot.summary?.outcome ?? "";
+  const avg = snapshot.summary?.average ?? "";
+  return `${roomCode.trim().toUpperCase()}:${snapshot.round}:${outcome}:${avg}:${votes}`;
+}
+
+function readHistory(roomCode: string): EstimationHistoryItem[] {
+  if (!roomCode.trim()) return [];
+  try {
+    const raw = localStorage.getItem(historyKey(roomCode));
+    if (!raw) return [];
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed as EstimationHistoryItem[];
+  } catch {
+    return [];
+  }
+}
+
+function writeHistory(roomCode: string, items: EstimationHistoryItem[]): void {
+  if (!roomCode.trim()) return;
+  try {
+    localStorage.setItem(historyKey(roomCode), JSON.stringify(items));
+  } catch {
+    /* ignore */
+  }
+}
+
+function clearHistory(roomCode: string): void {
+  if (!roomCode.trim()) return;
+  try {
+    localStorage.removeItem(historyKey(roomCode));
+  } catch {
+    /* ignore */
+  }
 }
 
 function clearRoomSession(): void {
@@ -126,6 +185,10 @@ export default function Home() {
   const [thinkSeconds, setThinkSeconds] = useState(30);
   const [state, setState] = useState<RoomSnapshot | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [history, setHistory] = useState<EstimationHistoryItem[]>([]);
+  const lastRoomStateRef = useRef<RoomSnapshot | null>(null);
+
+  const normalizedRoomCode = useMemo(() => roomCode.trim().toUpperCase(), [roomCode]);
 
   useEffect(() => {
     let id = sessionStorage.getItem(PP_CLIENT_ID);
@@ -187,6 +250,46 @@ export default function Home() {
       tryResume();
     });
     s.on("pp:roomState", (payload: RoomSnapshot) => {
+      const prev = lastRoomStateRef.current;
+      const next = payload;
+
+      const prevPhase = prev?.phase ?? null;
+      const nextPhase = next.phase ?? null;
+      const enteredItemComplete = prevPhase !== "item_complete" && nextPhase === "item_complete";
+      const canCapture = enteredItemComplete && !!next.summary && !!next.revealedVotes;
+
+      const rc = next.roomCode.trim().toUpperCase();
+      const items = readHistory(rc);
+      let updatedItems = items;
+
+      if (canCapture) {
+        const id = makeHistoryId(rc, next);
+        const lastId = items.length > 0 ? items[items.length - 1]?.id : null;
+        if (lastId !== id) {
+          const nextIndex = (items[items.length - 1]?.itemIndex ?? 0) + 1;
+          const item: EstimationHistoryItem = {
+            id,
+            roomCode: rc,
+            itemIndex: nextIndex,
+            completedAt: new Date().toISOString(),
+            roundsUsed: next.round,
+            summary: next.summary!,
+            revealedVotes: next.revealedVotes!,
+            participants: next.participants.map((p) => ({
+              clientId: p.clientId,
+              name: p.name,
+              role: p.role,
+            })),
+          };
+          updatedItems = [...items, item];
+          writeHistory(rc, updatedItems);
+        }
+      }
+
+      // 每次 roomState 都同步一次，避免 Host/Participant 因時序造成畫面不更新
+      setHistory(updatedItems);
+
+      lastRoomStateRef.current = next;
       setState(payload);
       setRoomCode(payload.roomCode);
       setError(null);
@@ -198,13 +301,38 @@ export default function Home() {
       clearRoomSession();
       setState(null);
       setRoomCode("");
+      lastRoomStateRef.current = null;
     });
     return () => {
       s.disconnect();
     };
   }, [clientId]);
 
+  useEffect(() => {
+    if (!normalizedRoomCode) {
+      setHistory([]);
+      return;
+    }
+    setHistory(readHistory(normalizedRoomCode));
+  }, [normalizedRoomCode]);
+
   const clearError = useCallback(() => setError(null), []);
+
+  const clearLocalHistory = useCallback(() => {
+    if (!normalizedRoomCode) return;
+    clearHistory(normalizedRoomCode);
+    setHistory([]);
+  }, [normalizedRoomCode]);
+
+  const formatCompletedAt = useCallback((iso: string) => {
+    try {
+      const d = new Date(iso);
+      if (Number.isNaN(d.getTime())) return iso;
+      return d.toLocaleString();
+    } catch {
+      return iso;
+    }
+  }, []);
 
   const createRoom = () => {
     clearError();
@@ -566,6 +694,75 @@ export default function Home() {
               )}
             </div>
           )}
+
+          <details className="rounded-lg border border-[#223555] bg-[#0c1422] p-3">
+            <summary className="cursor-pointer select-none text-sm font-medium text-slate-200">
+              估算歷史 <span className="text-xs font-normal text-slate-400">（{history.length}）</span>
+            </summary>
+            <div className="mt-3 space-y-3">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs text-slate-400">此歷史僅儲存在你的瀏覽器本機。</p>
+                <button
+                  type="button"
+                  onClick={clearLocalHistory}
+                  disabled={history.length === 0}
+                  className="rounded-md border border-[#F27A3E]/50 bg-[#3a1f16] px-2 py-1 text-xs text-[#ffd8c4] hover:bg-[#4a261b] disabled:opacity-50"
+                >
+                  清除
+                </button>
+              </div>
+
+              {history.length === 0 && (
+                <p className="text-xs text-slate-400">尚無紀錄（待估項目完結後會自動新增）。</p>
+              )}
+
+              {history.length > 0 && (
+                <ul className="space-y-2">
+                  {history
+                    .slice()
+                    .reverse()
+                    .map((h) => (
+                      <li key={h.id} className="rounded-lg border border-[#1b2a41] bg-[#0f1929]">
+                        <details className="p-3">
+                          <summary className="cursor-pointer select-none text-sm">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <span className="font-medium text-slate-100">
+                                #{h.itemIndex} <span className="text-slate-300">R{h.roundsUsed}</span>
+                              </span>
+                              <span className="text-xs text-slate-400">{formatCompletedAt(h.completedAt)}</span>
+                            </div>
+                            <p className="mt-1 text-xs text-slate-300">{h.summary.message}</p>
+                          </summary>
+
+                          <div className="mt-3 space-y-2">
+                            <ul className="space-y-1 rounded-lg border border-[#223555] bg-[#0c1422] p-3 text-sm">
+                              {Object.entries(h.revealedVotes).map(([n, v]) => (
+                                <li key={n} className="flex justify-between">
+                                  <span className="text-slate-300">{n}</span>
+                                  <span className="font-mono font-medium">{v}</span>
+                                </li>
+                              ))}
+                            </ul>
+
+                            <div className="rounded-lg border border-[#223555] bg-[#0c1422] px-3 py-2 text-xs text-slate-300">
+                              <p className="font-medium text-slate-200">{h.summary.message}</p>
+                              {h.summary.outcome === "failure_high_low" && (
+                                <p className="mt-1">
+                                  最低 {h.summary.min}／最高 {h.summary.max}
+                                </p>
+                              )}
+                              {typeof h.summary.average === "number" && (
+                                <p className="mt-1">平均 {h.summary.average}</p>
+                              )}
+                            </div>
+                          </div>
+                        </details>
+                      </li>
+                    ))}
+                </ul>
+              )}
+            </div>
+          </details>
 
           <div>
             <p className="mb-2 text-xs text-slate-400">成員</p>

@@ -136,6 +136,21 @@ TBD - created by archiving change planning-poker-web. Update Purpose after archi
 - **WHEN** Host 開始下一次投分
 - **THEN** 系統不強制收集項目名稱或編號，僅重置流程狀態
 
+### Requirement: 待估項目完結後保留估算歷史（前端本機）
+系統 SHALL 在每次待估項目完結（進入 `item_complete`）後，讓使用者可回看該次估算結果之歷史紀錄。此歷史紀錄 SHALL 由前端從房間狀態推導並儲存在瀏覽器端（例如 localStorage），且 SHALL NOT 改變既有投票流程、事件語意與結果計算邏輯。
+
+#### Scenario: 完結後新增一筆歷史紀錄
+- **WHEN** 房間狀態由非 `item_complete` 轉換為 `item_complete`
+- **THEN** 前端新增一筆歷史紀錄，包含完成時間、該次摘要結果（成功平均／無法估算／最高最低提醒等）與投票明細（每位參與者投票卡面）
+
+#### Scenario: 重連或狀態重送不產生重複紀錄
+- **WHEN** 使用者重整頁面、重連 Socket，或收到重複的 `item_complete` 狀態推播
+- **THEN** 前端 SHALL NOT 重複新增相同的歷史紀錄
+
+#### Scenario: 開始下一次投分後歷史仍可回看
+- **WHEN** Host 執行「開始下一次投分」並重置狀態
+- **THEN** 先前完結的歷史紀錄仍可在 UI 中回看，且新一輪完結時可再新增下一筆歷史
+
 ### Requirement: Host 不得「僅離開房間」（選項 A）
 Host SHALL NOT 使用與一般參與者相同的「離開房間」路徑來脫離該房；Host SHALL 僅能選擇留在房內，或執行明確的「解散房間」以結束該房並通知／移除所有參與者。系統 SHALL 拒絕任何將 Host 視為僅移除自身、而房間仍由其他人繼續運作的「Host 離開」操作。
 

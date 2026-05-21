@@ -3,6 +3,7 @@
 services:
   server:
     image: yuminggood/agiletools-server:${AGILETOOLS_VERSION:-latest}
+    restart: always
     build:
       context: .
       dockerfile: apps/server/Dockerfile
@@ -17,6 +18,7 @@ services:
 
   web:
     image: yuminggood/agiletools-web:${AGILETOOLS_VERSION:-latest}
+    restart: always
     build:
       context: .
       dockerfile: apps/web/Dockerfile
